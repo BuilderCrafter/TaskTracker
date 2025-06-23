@@ -1,0 +1,25 @@
+repos:
+  # Ruff ─ fast linter + autofix
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.3
+    hooks:
+      - id: ruff
+        args: [--fix] # auto-apply safe fixes
+
+  # Black ─ code formatter
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+
+  # mypy ─ static type checker
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        args: [--install-types, --non-interactive]
+        additional_dependencies:
+          - fastapi
+          - sqlalchemy[asyncio]
+          - pydantic-settings
+          - alembic

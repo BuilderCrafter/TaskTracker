@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main] # run on direct pushes to main
+  pull_request: # and on every PR branch
+    paths-ignore: # skip docs-only changes
+      - "**/*.md"
+      - "README.*"
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tasks
+        ports:
+          - 5432:5432
+        # wait until Postgres is ready
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      # ── Checkout code ────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── Set up Python (matches Poetry's version constraint) ─────────
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ── Cache Poetry virtual-env for faster builds ───────────────────
+      - name: Cache Poetry cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+
+      # ── Install Poetry & project dependencies ───────────────────────
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install deps (main + dev)
+        run: poetry install --no-interaction --with dev
+
+      # ── Run pre-commit hooks (format, lint, type-check quickly) ─────
+      - name: Run pre-commit
+        run: poetry run pre-commit run --all-files --show-diff-on-failure
+
+      # ── Apply Alembic migrations against the CI Postgres ────────────
+      - name: Upgrade DB schema
+        env:
+          DB_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/tasks
+        run: poetry run alembic upgrade head
+
+      # ── Run the full test suite ─────────────────────────────────────
+      - name: Run pytest
+        env:
+          DB_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/tasks
+        run: poetry run pytest -q

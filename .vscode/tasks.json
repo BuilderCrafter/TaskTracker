@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "pytest",
+            "type": "shell",
+            "command": "poetry run pytest -q",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "lint",
+            "type": "shell",
+            "command": "poetry run ruff check .",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "format",
+            "type": "shell",
+            "command": "poetry run black .",
+            "problemMatcher": []
+        },
+        {
+            "label": "migrate (alembic upgrade head)",
+            "type": "shell",
+            "command": "poetry run alembic upgrade head",
+            "problemMatcher": []
+        }
+    ]
+}

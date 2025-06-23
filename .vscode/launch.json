@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI (Uvicorn)",
+      "type": "debugpy",
+      "request": "launch",
+      // Call Poetry directly
+      "program": "poetry",
+      "args": [
+        "run",
+        "uvicorn",
+        "app.main:app",
+        "--reload"
+      ],
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/.env",
+      "jinja": true
+    }
+  ]
+}
