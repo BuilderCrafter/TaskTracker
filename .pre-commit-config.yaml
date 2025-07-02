@@ -23,3 +23,5 @@ repos:
           - sqlalchemy[asyncio]
           - pydantic-settings
           - alembic
+          - "sqlalchemy>=2.0"
+          - "types-passlib"

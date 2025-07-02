@@ -15,6 +15,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from app.core.config import settings
 from app.core.database import Base  # Base = declarative_base() in your project
 
+# ── Adding models to the migrations ─────────────────────────────────────────
+from app.users import models as user_models  # noqa: F401
+
 # ── Alembic config & logging ────────────────────────────────────────────────
 config = context.config
 if config.config_file_name is not None:
