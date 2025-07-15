@@ -11,7 +11,7 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    owner_id: UUID
 
 
 class TaskUpdate(BaseModel):
@@ -22,17 +22,12 @@ class TaskUpdate(BaseModel):
     deadline: date | None = None
 
 
-class OwnerAssign(BaseModel):
-    task_id: UUID
-    owner_id: UUID | None
-
-
 class TaskOut(TaskBase):
     id: UUID
     complete: bool
     created_at: datetime
     updated_at: datetime
-    owner_id: UUID | None
+    owner_id: UUID
 
     class Config:
         orm_mode = True

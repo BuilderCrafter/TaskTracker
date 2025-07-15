@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 from app.tasks.schemas import TaskOut
+from app.projects.schemas import ProjectOut
 
 
 class UserBase(BaseModel):
@@ -25,6 +26,7 @@ class UserOut(UserBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+    projects: list[ProjectOut] = []
     tasks: list[TaskOut] = []
 
     class Config:
