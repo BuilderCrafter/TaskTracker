@@ -11,6 +11,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.users.models import User
+    from app.projects.models import Project
 
 
 class Task(Base):
@@ -36,7 +37,13 @@ class Task(Base):
         nullable=False,
     )
 
-    owner_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    owner: Mapped["User | None"] = relationship(back_populates="tasks")
+    owner: Mapped["User"] = relationship(back_populates="tasks")
+
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
+    )
+
+    project: Mapped["Project | None"] = relationship(back_populates="tasks")
