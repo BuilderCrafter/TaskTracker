@@ -37,6 +37,18 @@ pydantic = {extras = ["mypy"], version = "^2.11.7"}
 pydantic-settings = "^2.10.0"
 alembic = "^1.16.2"
 types-passlib = "^1.7.7.20250602"
+factory-boy = "^3.3.3"
+aiosqlite = "^0.21.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
+httpx = "^0.28.1"
+testcontainers = {extras = ["postgres"], version = "^4.10.0"}
+factory-boy = "^3.3.3"
+asyncpg = "^0.30.0"
+psycopg2-binary = "^2.9.10"
 
 [tool.mypy]
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]

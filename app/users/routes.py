@@ -21,7 +21,9 @@ async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.get("/", response_model=List[UserOut])
 async def list_users(db: AsyncSession = Depends(get_db)):
-    res = await db.execute(select(User).options(selectinload(User.tasks)))
+    res = await db.execute(
+        select(User).options(selectinload(User.tasks), selectinload(User.projects))
+    )
     return res.scalars().all()
 
 
@@ -30,7 +32,7 @@ async def read_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     return await user_crud.get(db, user_id)
 
 
-@router.patch("/update/{user_id}", response_model=UserOut)
+@router.patch("/{user_id}", response_model=UserOut)
 async def update_user(
     user_id: UUID, upd: UserUpdate, db: AsyncSession = Depends(get_db)
 ):
@@ -38,7 +40,7 @@ async def update_user(
     return await user_crud.update(db, db_user, upd)
 
 
-@router.delete("/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     db_user = await user_crud.get(db, user_id)
     await user_crud.remove(db, db_user)

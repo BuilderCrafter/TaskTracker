@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.tasks.schemas import TaskOut
 
@@ -32,5 +32,4 @@ class ProjectOut(ProjectBase):
     updated_at: datetime
     tasks: list["TaskOut"] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

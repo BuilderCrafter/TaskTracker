@@ -24,12 +24,12 @@ async def list_tasks(db: AsyncSession = Depends(get_db)):
     return res.scalars().all()
 
 
-@router.get("/{task_name}", response_model=List[TaskOut])
+@router.get("/name/{task_name}", response_model=List[TaskOut])
 async def get_task_by_name(task_name: str, db: AsyncSession = Depends(get_db)):
     return await task_crud.get_by_name(db, task_name)
 
 
-@router.get("/{task_id}", response_model=TaskOut)
+@router.get("/id/{task_id}", response_model=TaskOut)
 async def get_task_by_id(task_id: UUID, db: AsyncSession = Depends(get_db)):
     return await task_crud.get(db, task_id)
 

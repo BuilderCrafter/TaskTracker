@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from app.tasks.schemas import TaskOut
 from app.projects.schemas import ProjectOut
 
@@ -18,6 +18,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     full_name: str | None = None
+    email: EmailStr | None = None
     password: str | None = Field(default=None, min_length=8)
     is_active: bool | None = None
 
@@ -29,5 +30,4 @@ class UserOut(UserBase):
     projects: list[ProjectOut] = []
     tasks: list[TaskOut] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

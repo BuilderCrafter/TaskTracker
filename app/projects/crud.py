@@ -2,6 +2,7 @@ from uuid import UUID
 from typing import Sequence
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +23,11 @@ from app.tasks.exceptions import TaskNotFoundError
 
 
 async def get(db: AsyncSession, project_id: UUID) -> Project:
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(User.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
@@ -70,7 +75,11 @@ async def add_task(db: AsyncSession, task_id: UUID, project_id: UUID) -> Project
     if task is None:
         raise TaskNotFoundError(ctx={"id": str(task_id)})
 
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
@@ -105,7 +114,11 @@ async def remove_task(db: AsyncSession, task_id: UUID, project_id: UUID) -> Proj
     if task is None:
         raise TaskNotFoundError(ctx={"id": str(task_id)})
 
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
