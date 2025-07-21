@@ -34,7 +34,7 @@ async def get_task_by_id(task_id: UUID, db: AsyncSession = Depends(get_db)):
     return await task_crud.get(db, task_id)
 
 
-@router.patch("/update/{task_id}", response_model=TaskOut)
+@router.patch("/id/{task_id}", response_model=TaskOut)
 async def update_task(
     task_id: UUID, task_in: TaskUpdate, db: AsyncSession = Depends(get_db)
 ):
@@ -42,7 +42,7 @@ async def update_task(
     return await task_crud.update(db, db_task, task_in)
 
 
-@router.delete("/delete/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/id/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(task_id: UUID, db: AsyncSession = Depends(get_db)):
     db_task = await task_crud.get(db, task_id)
     await task_crud.remove(db, db_task)
