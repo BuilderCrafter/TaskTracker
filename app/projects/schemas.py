@@ -23,6 +23,7 @@ class ProjectUpdate(BaseModel):
 class ProjectAssignTask(BaseModel):
     project_id: UUID
     task_id: UUID
+    task_assign: bool
 
 
 class ProjectOut(ProjectBase):
