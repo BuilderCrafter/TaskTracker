@@ -18,6 +18,7 @@ from app.core.database import Base  # Base = declarative_base() in your project
 # ── Adding models to the migrations ─────────────────────────────────────────
 from app.users import models as user_models  # noqa: F401
 from app.tasks import models as task_models  # noqa: F401
+from app.projects import models as project_models  # noqa: F401
 
 # ── Alembic config & logging ────────────────────────────────────────────────
 config = context.config

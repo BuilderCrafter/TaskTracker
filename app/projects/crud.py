@@ -2,6 +2,7 @@ from uuid import UUID
 from typing import Sequence
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +23,11 @@ from app.tasks.exceptions import TaskNotFoundError
 
 
 async def get(db: AsyncSession, project_id: UUID) -> Project:
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
@@ -31,13 +36,19 @@ async def get(db: AsyncSession, project_id: UUID) -> Project:
 
 async def get_by_name(db: AsyncSession, project_name: str) -> Sequence[Project]:
     tasks = await db.execute(
-        select(Project).where(Project.name.ilike(f"%{project_name}%"))
+        select(Project)
+        .where(Project.name.ilike(f"%{project_name}%"))
+        .options(selectinload(Project.tasks))
     )
     return tasks.scalars().all()
 
 
 async def create(db: AsyncSession, obj: ProjectCreate) -> Project:
-    res_owner = await db.execute(select(User).where(User.id == obj.owner_id))
+    res_owner = await db.execute(
+        select(User)
+        .where(User.id == obj.owner_id)
+        .options(selectinload(User.tasks), selectinload(User.projects))
+    )
     owner: User | None = res_owner.scalar_one_or_none()
     if owner is None:
         raise UserNotFoundError(ctx={"id": str(obj.owner_id)})
@@ -49,7 +60,7 @@ async def create(db: AsyncSession, obj: ProjectCreate) -> Project:
     except IntegrityError:
         await db.rollback()
         raise
-    await db.refresh(db_obj)
+    await db.refresh(db_obj, ["owner", "tasks"])
     return db_obj
 
 
@@ -60,7 +71,7 @@ async def update(db: AsyncSession, db_obj: Project, obj: ProjectUpdate) -> Proje
         db_obj.description = obj.description
 
     await db.commit()
-    await db.refresh(db_obj)
+    await db.refresh(db_obj, ["owner", "tasks"])
     return db_obj
 
 
@@ -70,7 +81,11 @@ async def add_task(db: AsyncSession, task_id: UUID, project_id: UUID) -> Project
     if task is None:
         raise TaskNotFoundError(ctx={"id": str(task_id)})
 
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
@@ -105,7 +120,11 @@ async def remove_task(db: AsyncSession, task_id: UUID, project_id: UUID) -> Proj
     if task is None:
         raise TaskNotFoundError(ctx={"id": str(task_id)})
 
-    res_project = await db.execute(select(Project).where(Project.id == project_id))
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
     project: Project | None = res_project.scalar_one_or_none()
     if project is None:
         raise ProjectNotFoundError(ctx={"id": str(project_id)})
@@ -126,6 +145,14 @@ async def remove_task(db: AsyncSession, task_id: UUID, project_id: UUID) -> Proj
     return project
 
 
-async def remove(db: AsyncSession, db_obj: Project) -> None:
-    await db.delete(db_obj)
+async def remove(db: AsyncSession, project_id: UUID) -> None:
+    res_project = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.tasks))
+    )
+    project: Project | None = res_project.scalar_one_or_none()
+    if project is None:
+        raise ProjectNotFoundError(ctx={"id": str(project_id)})
+    await db.delete(project)
     await db.commit()

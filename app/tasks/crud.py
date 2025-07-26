@@ -2,6 +2,7 @@ from uuid import UUID
 from typing import Sequence
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +15,11 @@ from app.users.exceptions import UserNotFoundError
 
 
 async def get(db: AsyncSession, task_id: UUID) -> Task:
-    res_task = await db.execute(select(Task).where(Task.id == task_id))
+    res_task = await db.execute(
+        select(Task)
+        .where(Task.id == task_id)
+        .options(selectinload(Task.owner), selectinload(Task.project))
+    )
     task: Task | None = res_task.scalar_one_or_none()
     if task is None:
         raise TaskNotFoundError(ctx={"id": str(task_id)})
@@ -22,7 +27,11 @@ async def get(db: AsyncSession, task_id: UUID) -> Task:
 
 
 async def get_by_name(db: AsyncSession, task_name: str) -> Sequence[Task]:
-    tasks = await db.execute(select(Task).where(Task.name.ilike(f"%{task_name}%")))
+    tasks = await db.execute(
+        select(Task)
+        .where(Task.name.ilike(f"%{task_name}%"))
+        .options(selectinload(Task.owner), selectinload(Task.project))
+    )
     return tasks.scalars().all()
 
 
