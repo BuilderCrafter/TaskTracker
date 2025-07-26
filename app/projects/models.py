@@ -3,7 +3,7 @@ import datetime
 import uuid
 
 from typing import List, TYPE_CHECKING
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import DateTime, String, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,21 +11,17 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.tasks.models import Task
-    from app.projects.models import Project
+    from app.users.models import User
 
 
-class User(Base):
-    __tablename__ = "users"
+class Project(Base):
+    __tablename__ = "projects"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
-    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    hashed_pass: Mapped[str] = mapped_column(String(255), nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -36,9 +32,11 @@ class User(Base):
         nullable=False,
     )
 
-    tasks: Mapped[List["Task"]] = relationship(
-        back_populates="owner", cascade="all, delete-orphan", uselist=True
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    projects: Mapped[List["Project"]] = relationship(
-        back_populates="owner", cascade="all, delete-orphan", uselist=True
+    owner: Mapped["User"] = relationship(back_populates="projects")
+
+    tasks: Mapped[List["Task"]] = relationship(
+        back_populates="project", cascade="all", uselist=True
     )

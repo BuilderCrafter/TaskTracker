@@ -25,3 +25,7 @@ repos:
           - alembic
           - "sqlalchemy>=2.0"
           - "types-passlib"
+          - "factory-boy"
+          - pytest
+          - pytest_asyncio
+          - httpx

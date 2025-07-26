@@ -1,25 +1,47 @@
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash
 from .models import User
 from .schemas import UserCreate, UserUpdate
+from .exceptions import EmailAlreadyExistsError, UserNotFoundError
 
 
-async def get(db: AsyncSession, user_id: UUID) -> User | None:
-    res = await db.execute(select(User).where(User.id == user_id))
-    return res.scalar_one_or_none()
+async def get(db: AsyncSession, user_id: UUID) -> User:
+    res_user = await db.execute(
+        select(User)
+        .where(User.id == user_id)
+        .options(selectinload(User.tasks), selectinload(User.projects))
+    )
+    user: User | None = res_user.scalar_one_or_none()
+    if user is None:
+        raise UserNotFoundError(ctx={"id": str(user_id)})
+    return user
 
 
-async def get_by_email(db: AsyncSession, email: str) -> User | None:
-    res = await db.execute(select(User).where(User.email == email))
-    return res.scalar_one_or_none()
+async def get_by_email(db: AsyncSession, email: str) -> User:
+    res_user = await db.execute(
+        select(User)
+        .where(User.email == email)
+        .options(selectinload(User.tasks), selectinload(User.projects))
+    )
+    user: User | None = res_user.scalar_one_or_none()
+    if user is None:
+        raise UserNotFoundError(ctx={"email": str(email)})
+    return user
 
 
 async def create(db: AsyncSession, obj: UserCreate) -> User:
+
+    res_user = await db.execute(select(User).where(User.email == obj.email))
+    user: User | None = res_user.scalar_one_or_none()
+    if user:
+        raise EmailAlreadyExistsError(ctx={"email": str(obj.email)})
+
     db_obj = User(
         email=obj.email,
         full_name=obj.full_name,
@@ -38,14 +60,20 @@ async def create(db: AsyncSession, obj: UserCreate) -> User:
 async def update(db: AsyncSession, db_obj: User, obj: UserUpdate) -> User:
     if obj.full_name is not None:
         db_obj.full_name = obj.full_name
+    if obj.email is not None:
+        db_obj.email = obj.email
     if obj.password is not None:
-        db_obj.hashed_pass = get_password_hash(obj.password)
+        db_obj.hashed_pass = get_password_hash(str(obj.password))
     if obj.is_active is not None:
         db_obj.is_active = obj.is_active
 
     await db.commit()
-    await db.refresh(db_obj)
-    return db_obj
+    result = await db.execute(
+        select(User)
+        .where(User.id == db_obj.id)
+        .options(selectinload(User.projects), selectinload(User.tasks))
+    )
+    return result.scalar_one()
 
 
 async def remove(db: AsyncSession, db_obj: User) -> None:
